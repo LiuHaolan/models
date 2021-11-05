@@ -291,17 +291,38 @@ def train_step(data_iterator, model, optimizer, lr_scheduler, args, timers, forw
     optimizer.zero_grad()
     while True:
         skipped_iter, complete = 0, False
+
+        print("~~~~~~~~~~~~~~~1~~~~~~~~~~~~~~~~~~~~~")
         
         timers('forward').start()
         lm_loss, mems, _ = forward_step_func(data_iterator, model, args, timers, mems)
         timers('forward').stop()
         
+        print("~~~~~~~~~~~~~~~1.1~~~~~~~~~~~~~~~~~~~~~")
+        print(lm_loss)
+        if lm_loss.is_consistent:
+            lm_loss = lm_loss.to_local()
+        print("~~~~~~~~~~~~~~~2~~~~~~~~~~~~~~~~~~~~~")
         lm_loss /= args.gradient_accumulation_steps
 
-        reduced_loss = lm_loss.detach().clone().view((1,))
+        print("None")
+
+        # reduced_loss = lm_loss.detach().clone().view((1,))
+
+        reduced_loss = lm_loss.detach()
+        print("==================2.1=================")
+        reduced_loss = reduced_loss.clone()
+        print(reduced_loss)
+        print("==================2.2================")
+        # reduced_loss = reduced_loss.view((1,))
+
+        # tensor(10.5341, placement=oneflow.placement("cuda", {0: [0, 1]}, hierarchy=(2,)), sbp=(oneflow.sbp.broadcast,), dtype=oneflow.float32)
+
+        print("~~~~~~~~~~~~~~~3~~~~~~~~~~~~~~~~~~~~~")
         # flow.distributed.all_reduce(reduced_loss.data, group=mpu.get_data_parallel_group())
         reduced_loss.data = reduced_loss.data / (args.world_size / args.model_parallel_size)
     
+        print("~~~~~~~~~~~~~~~4~~~~~~~~~~~~~~~~~~~~~")
         #True
         if not DynamicLossScaler._has_inf_or_nan(reduced_loss):
             lm_loss_total += reduced_loss
@@ -330,5 +351,7 @@ def train_step(data_iterator, model, optimizer, lr_scheduler, args, timers, forw
         
         if single_step:
             break
+        print("~~~~~~~~~~~~~~~5~~~~~~~~~~~~~~~~~~~~~")
     lm_loss_total = lm_loss_total / count
+    print("~~~~~~~~~~~~~~~6~~~~~~~~~~~~~~~~~~~~~")
     return lm_loss_total, skipped_iter, mems

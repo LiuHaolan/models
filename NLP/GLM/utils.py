@@ -511,7 +511,7 @@ def get_loss(vocab_parallel_logits,target):
 
     if logits_2d.is_consistent:
         arange_1d = flow._C.consistent_arange(start=0, end=logits_2d.size()[0],
-                                    placement=logits_2d.placement, sbp=logits_2d.sbp).to(flow.int)
+                                    placement=logits_2d.placement, sbp=flow.sbp.broadcast).to(flow.int)
     else:
         arange_1d = flow._C.arange(start=0, end=logits_2d.size()[0],
                                     device=logits_2d.device).to(flow.int)
@@ -519,7 +519,11 @@ def get_loss(vocab_parallel_logits,target):
     idx_1d = flow.stack([arange_1d, masked_target_1d], dim=1)
     predicted_logits_1d = flow.gather_nd(logits_2d, idx_1d)
     # predicted_logits_1d = logits_2d[arange_1d, masked_target_1d]
+    print("==========================================")
+    print(predicted_logits_1d)
+    print(target.size())
     predicted_logits = predicted_logits_1d.reshape(*target.size())
+    print("================succeed================")
     # del
     # predicted_logits[target_mask] = 0.0
 

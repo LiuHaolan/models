@@ -316,17 +316,19 @@ def train(model, optimizer, lr_scheduler,
     #0,200000
     while args.iteration < 10:
     # while args.iteration < args.train_iters:
+        print("#############1################")
         lm_loss, skipped_iter, mems = train_step(train_data_iterator,
                                                  glm_graph,
                                                  optimizer,
                                                  lr_scheduler,
                                                  args, timers, mems=mems, forward_step_func=forward_step, backward=False)
-
+        print("#############2################")
         skipped_iters += skipped_iter
         args.iteration += 1
         # print(args.iteration)
+
         total_lm_loss += lm_loss.data.detach().float()
-        
+        print("#############3################")
         #True
         if False:
         # if args.iteration % args.log_interval == 0:
@@ -349,6 +351,7 @@ def train(model, optimizer, lr_scheduler,
             evaluate_and_print_results(
                 prefix, val_data_iterator, model, args, timers, verbose=False, step=args.iteration,
                 summary_writer=summary_writer, forward_step_func=forward_step)
+        print("#############4################")
     te = time.time()
     print(te-tb)
     return args.iteration, skipped_iters
